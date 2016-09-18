@@ -1,0 +1,39 @@
+library(caret)
+
+# Read and clean trainging data
+rawdata <- read.csv("./pml-training.csv")
+col_select_train <- c("user_name",
+               "gyros_belt_x","gyros_belt_y","gyros_belt_z","accel_belt_x","accel_belt_y","accel_belt_z","magnet_belt_x","magnet_belt_y","magnet_belt_z",
+               "gyros_arm_x","gyros_arm_y","gyros_arm_z","accel_arm_x","accel_arm_y","accel_arm_z","magnet_arm_x","magnet_arm_y","magnet_arm_z",
+               "gyros_dumbbell_x","gyros_dumbbell_y","gyros_dumbbell_z","accel_dumbbell_x","accel_dumbbell_y","accel_dumbbell_z","magnet_dumbbell_x","magnet_dumbbell_y","magnet_dumbbell_z",
+               "gyros_forearm_x","gyros_forearm_y","gyros_forearm_z","accel_forearm_x","accel_forearm_y","accel_forearm_z","magnet_forearm_x","magnet_forearm_y","magnet_forearm_z",
+               "classe"
+               )
+data_selected <- rawdata[rawdata$new_window != "yes",col_select_train]
+set.seed(10)
+inTrain <- createDataPartition(data_selected$classe, p = 3/4, list=F)
+training <- data_selected[inTrain,]
+quizing <- data_selected[-inTrain,]
+
+# Predict the quizing data from training data
+# It takes about 1hr for random forest classification method
+ptm <- proc.time()
+modFit <- train(classe ~ .,data=data_selected,method="rf")
+time <- proc.time() - ptm
+pred_quiz <- predict(modFit,quizing)
+cmfit <- confusionMatrix(quizing$classe,pred_quiz)
+time
+cmfit$table
+
+# Read and clean testing data
+rawdata_test <- read.csv("./pml-testing.csv")
+col_select_test <- c("user_name",
+                     "gyros_belt_x","gyros_belt_y","gyros_belt_z","accel_belt_x","accel_belt_y","accel_belt_z","magnet_belt_x","magnet_belt_y","magnet_belt_z",
+                     "gyros_arm_x","gyros_arm_y","gyros_arm_z","accel_arm_x","accel_arm_y","accel_arm_z","magnet_arm_x","magnet_arm_y","magnet_arm_z",
+                     "gyros_dumbbell_x","gyros_dumbbell_y","gyros_dumbbell_z","accel_dumbbell_x","accel_dumbbell_y","accel_dumbbell_z","magnet_dumbbell_x","magnet_dumbbell_y","magnet_dumbbell_z",
+                     "gyros_forearm_x","gyros_forearm_y","gyros_forearm_z","accel_forearm_x","accel_forearm_y","accel_forearm_z","magnet_forearm_x","magnet_forearm_y","magnet_forearm_z"
+                     )
+testdata_selected <- rawdata_test[rawdata_test$new_window != "yes",col_select_test]
+
+# Predict testing data using fitted model
+pred_test <- predict(modFit,testdata_selected)
